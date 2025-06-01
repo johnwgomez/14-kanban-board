@@ -11,15 +11,21 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   const token = authHeader && authHeader.split(' ')[1]; // Extract token from "Bearer <token>"
 
   if (!token) {
-    return res.status(401).json({ message: 'Access denied. No token provided.' });
+    res.status(401).json({ message: 'Access denied. No token provided.' });
   }
 
   try {
     const secretKey = process.env.JWT_SECRET || 'your-secret-key';
-    const decoded = jwt.verify(token, secretKey) as JwtPayload;
+    if (!secretKey) {
+      throw new Error('JWT secret key is not defined.');
+    }
+    if (!token) {
+      throw new Error('Token is undefined.');
+    }
+    const decoded = jwt.verify(token, secretKey) as unknown as JwtPayload;
     req.user = decoded;
-    next();
+    next(); 
   } catch (error) {
     res.status(403).json({ message: 'Invalid or expired token.' });
-  }
+  } 
 };
